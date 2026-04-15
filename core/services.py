@@ -1,12 +1,15 @@
 import logging
 from dataclasses import dataclass
 from typing import Any
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from .ai_engine import FraudDetector
 from .models import Blacklist, ScanHistory
+
+if TYPE_CHECKING:
+    from .ai_engine import FraudDetector
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ class ServiceError(Exception):
 
 
 class AnalysisService:
-    def __init__(self, detector: FraudDetector | None = None):
+    def __init__(self, detector: 'FraudDetector' | None = None):
         self.detector = detector
         self._validator = URLValidator()
 
@@ -171,7 +174,9 @@ class AnalysisService:
             "green_flags": result["green_flags"],
         }
 
-    def _detector(self) -> FraudDetector:
+    def _detector(self) -> 'FraudDetector':
         if self.detector is None:
+            from .ai_engine import FraudDetector
+
             self.detector = FraudDetector()
         return self.detector

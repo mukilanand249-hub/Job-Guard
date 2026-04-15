@@ -13,6 +13,9 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me-in-produc
 DEBUG = env_bool('DJANGO_DEBUG', True)
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host.strip()]
+render_external_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME', '').strip()
+if render_external_hostname and render_external_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_external_hostname)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -97,6 +100,9 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
     if origin.strip()
 ]
+render_external_url = os.getenv('RENDER_EXTERNAL_URL', '').strip()
+if render_external_url and render_external_url not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(render_external_url)
 
 LOGGING = {
     'version': 1,
