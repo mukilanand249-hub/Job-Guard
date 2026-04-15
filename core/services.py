@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 from typing import TYPE_CHECKING
 
+from django.db import DatabaseError
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
@@ -80,15 +81,23 @@ class AnalysisService:
         normalized_url = self._normalize_url(url)
         reason_text = self._normalize_text(reason) or "Reported by user"
 
-        obj, created = Blacklist.objects.get_or_create(
-            url=normalized_url,
-            defaults={"reason": reason_text},
-        )
-        if not created:
-            obj.report_count += 1
-            if reason_text and obj.reason != reason_text:
-                obj.reason = reason_text
-            obj.save(update_fields=["report_count", "reason"])
+        try:
+            obj, created = Blacklist.objects.get_or_create(
+                url=normalized_url,
+                defaults={"reason": reason_text},
+            )
+            if not created:
+                obj.report_count += 1
+                if reason_text and obj.reason != reason_text:
+                    obj.reason = reason_text
+                obj.save(update_fields=["report_count", "reason"])
+        except DatabaseError as exc:
+            logger.exception("Blacklist persistence failed for %s", normalized_url)
+            raise ServiceError(
+                "storage_unavailable",
+                "The reporting database is temporarily unavailable.",
+                503,
+            ) from exc
 
         return {
             "message": "Report submitted successfully",
@@ -112,7 +121,11 @@ class AnalysisService:
         return normalized_url
 
     def _check_blacklist(self, url: str) -> dict[str, Any] | None:
-        if not Blacklist.objects.filter(url=url).exists():
+        try:
+            if not Blacklist.objects.filter(url=url).exists():
+                return None
+        except DatabaseError:
+            logger.exception("Blacklist lookup failed for %s", url)
             return None
 
         return {
@@ -158,14 +171,20 @@ class AnalysisService:
             ) from exc
 
     def _persist_and_serialize(self, url: str, text: str, result: dict[str, Any]) -> dict[str, Any]:
-        scan = ScanHistory.objects.create(
-            url=url or None,
-            text_content=text[:500],
-            trust_score=result["trust_score"],
-            verdict=result["verdict"],
-        )
+        scan_id = None
+        try:
+            scan = ScanHistory.objects.create(
+                url=url or None,
+                text_content=text[:500],
+                trust_score=result["trust_score"],
+                verdict=result["verdict"],
+            )
+            scan_id = scan.id
+        except DatabaseError:
+            logger.exception("Scan history persistence failed")
+
         return {
-            "scan_id": scan.id,
+            "scan_id": scan_id,
             "trust_score": result["trust_score"],
             "verdict": result["verdict"],
             "recommendation": result["recommendation"],
