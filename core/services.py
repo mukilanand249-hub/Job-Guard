@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -31,7 +33,7 @@ class ServiceError(Exception):
 
 
 class AnalysisService:
-    def __init__(self, detector: 'FraudDetector' | None = None):
+    def __init__(self, detector: FraudDetector | None = None):
         self.detector = detector
         self._validator = URLValidator()
 
