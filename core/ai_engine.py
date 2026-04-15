@@ -1,5 +1,3 @@
-import torch
-from transformers import pipeline
 from bs4 import BeautifulSoup
 import requests
 import whois
@@ -7,9 +5,13 @@ import pytesseract
 from PIL import Image
 from datetime import datetime
 import io
+import logging
+import os
 from urllib.parse import urlparse
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 tesseract_cmd = getattr(settings, "TESSERACT_CMD", "").strip()
 if tesseract_cmd:
@@ -18,12 +20,39 @@ if tesseract_cmd:
 class FraudDetector:
     _instance = None
     _classifier = None
+    _classifier_attempted = False
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(FraudDetector, cls).__new__(cls)
-            cls._classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
         return cls._instance
+
+    @classmethod
+    def _get_classifier(cls):
+        if cls._classifier_attempted:
+            return cls._classifier
+
+        cls._classifier_attempted = True
+
+        if os.getenv("JOBGUARD_DISABLE_TRANSFORMERS", "").strip().lower() in {"1", "true", "yes", "on"}:
+            logger.warning("Transformers pipeline disabled via JOBGUARD_DISABLE_TRANSFORMERS.")
+            cls._classifier = None
+            return None
+
+        try:
+            from transformers import pipeline
+
+            # Force CPU inference on constrained hosts like Render free instances.
+            cls._classifier = pipeline(
+                "zero-shot-classification",
+                model="facebook/bart-large-mnli",
+                device=-1,
+            )
+        except Exception:
+            logger.exception("Falling back to heuristic-only analysis because the classifier could not be loaded.")
+            cls._classifier = None
+
+        return cls._classifier
 
     def scrape_url(self, url):
         try:
@@ -114,10 +143,20 @@ class FraudDetector:
         labels = ["fraudulent scam job posting", "legitimate safe job", "not a job description", "satirical or joke job posting"]
         # truncate text to avoid memory issues and pipeline token limits (usually 512 for bart)
         truncated_text = text[:1500] 
-        result = self._classifier(truncated_text, candidate_labels=labels)
-        
-        scores_map = dict(zip(result['labels'], result['scores']))
-        
+        classifier = self._get_classifier()
+        scores_map = {
+            "fraudulent scam job posting": 0.0,
+            "legitimate safe job": 0.0,
+            "not a job description": 0.0,
+            "satirical or joke job posting": 0.0,
+        }
+
+        if classifier is not None:
+            result = classifier(truncated_text, candidate_labels=labels)
+            scores_map.update(dict(zip(result['labels'], result['scores'])))
+        else:
+            green_flags.append("AI model unavailable; used heuristic-only analysis")
+
         if scores_map["not a job description"] > 0.45:
             return {
                 "trust_score": 0,
@@ -136,9 +175,12 @@ class FraudDetector:
         # Combine scam and joke probabilities as negative indicators
         scam_and_joke_score = scores_map.get("fraudulent scam job posting", 0) + scores_map.get("satirical or joke job posting", 0)
         legit_prob = scores_map["legitimate safe job"] / (scores_map["legitimate safe job"] + scam_and_joke_score + 1e-9)
-        legit_score = legit_prob * 100 
+        legit_score = legit_prob * 100
 
-        final_score = (heuristic_score * 0.6) + (legit_score * 0.4)
+        if classifier is None:
+            final_score = heuristic_score
+        else:
+            final_score = (heuristic_score * 0.6) + (legit_score * 0.4)
 
         # Force a SCAM verdict if the text contains 3 or more severe red flags
         if len(red_flags) >= 3:
