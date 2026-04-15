@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Analytics Dashboard</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gray-800 p-6 rounded-lg shadow">
+            <h3 class="text-gray-400 text-sm">Total Scans</h3>
+            <p class="text-3xl font-bold mt-2">{{ total_scans }}</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow border-l-4 border-green-500">
+            <h3 class="text-gray-400 text-sm">Legit Jobs</h3>
+            <p class="text-3xl font-bold mt-2">{{ legit_count }}</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow border-l-4 border-red-500">
+            <h3 class="text-gray-400 text-sm">Scams Detected</h3>
+            <p class="text-3xl font-bold mt-2">{{ scam_count }}</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow border-l-4 border-yellow-500">
+            <h3 class="text-gray-400 text-sm">Suspicious</h3>
+            <p class="text-3xl font-bold mt-2">{{ suspicious_count }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-800 p-6 rounded-lg shadow">
+            <h3 class="text-lg font-bold mb-4">Scan Distribution</h3>
+            <canvas id="bar-chart"></canvas>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow">
+            <h3 class="text-lg font-bold mb-4">Traffic Overview</h3>
+            <canvas id="line-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    const barCtx = document.getElementById('bar-chart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Legit', 'Scam', 'Suspicious'],
+            datasets: [{
+                label: 'Count',
+                data: [{{ legit_count }}, {{ scam_count }}, {{ suspicious_count }}],
+        backgroundColor: ['#10B981', '#EF4444', '#F59E0B']
+            }]
+        },
+        options: {
+        scales: { y: { beginAtZero: true, grid: { color: '#374151' } }, x: { grid: { display: false } } },
+        plugins: { legend: { display: false } }
+    }
+    });
+
+    const lineCtx = document.getElementById('line-chart').getContext('2d');
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Scans per Day',
+                data: [12, 19, 3, 5, 2, 3, {{ total_scans }}],
+            borderColor: '#3B82F6',
+            tension: 0.4
+        }]
+    },
+        options: {
+        scales: { y: { beginAtZero: true, grid: { color: '#374151' } }, x: { grid: { color: '#374151' } } }
+    }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Django
+db.sqlite3
+staticfiles/*
+!staticfiles/.gitkeep
+media/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Flutter / Dart
+mobile_app/.dart_tool/
+mobile_app/.packages
+mobile_app/.flutter-plugins
+mobile_app/.flutter-plugins-dependencies
+mobile_app/.metadata
+mobile_app/build/
+mobile_app/android/build/
+mobile_app/test_driver/report.css
+
+# Generated platform artifacts
+mobile_app/android/.gradle/
+mobile_app/android/app/debug/
+mobile_app/android/app/profile/
+mobile_app/android/app/release/
+mobile_app/ios/Pods/
+mobile_app/ios/.symlinks/
+mobile_app/linux/flutter/generated_plugin_registrant.cc
+mobile_app/linux/flutter/generated_plugins.cmake
+mobile_app/linux/flutter/generated_plugin_registrant.h
+mobile_app/macos/Flutter/ephemeral/
+mobile_app/windows/flutter/ephemeral/
+
+# Coverage
+coverage/
+mobile_app/coverage/

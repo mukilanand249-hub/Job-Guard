@@ -1,0 +1,15 @@
+django
+dj-database-url
+gunicorn
+torch
+transformers
+beautifulsoup4
+requests
+numpy
+scikit-learn
+python-whois
+pytesseract
+Pillow
+selenium
+whitenoise
+psycopg[binary]

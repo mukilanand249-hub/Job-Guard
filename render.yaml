@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: jobguard-backend
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn jobguard_project.wsgi:application
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: jobguard-backend.onrender.com
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: JOBGUARD_PRELOAD_MODEL
+        value: "False"
+      - key: PYTHON_VERSION
+        value: 3.11.11

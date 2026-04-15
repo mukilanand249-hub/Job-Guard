@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            width: 320px;
+            padding: 15px;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #111827;
+            color: white;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #3B82F6;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #10B981;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #059669;
+        }
+
+        button:disabled {
+            background-color: #374151;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #1F2937;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .verdict {
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .LEGIT {
+            background-color: #064E3B;
+            color: #6EE7B7;
+        }
+
+        .SCAM {
+            background-color: #7F1D1D;
+            color: #FCA5A5;
+        }
+
+        .SUSPICIOUS {
+            background-color: #78350F;
+            color: #FCD34D;
+        }
+
+        .error {
+            color: #EF4444;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>JobGuard AI Scanner</h1>
+    <p style="font-size: 13px; color: #9CA3AF;">Scan the current page for job fraud.</p>
+
+    <button id="scanBtn">Scan This Page</button>
+
+    <div id="result">
+        <div id="verdictBadge" class="verdict"></div>
+        <span id="trustScore" class="score"></span>
+        <p id="summary" style="font-size: 12px; line-height: 1.4; color: #D1D5DB;"></p>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
